@@ -4,8 +4,9 @@ import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Truck, Mail, Lock, Loader2, Eye, EyeOff, AlertCircle } from 'lucide-react'
+import { Suspense } from 'react'
 
-export default function LoginPage() {
+function LoginContent() {
   const router       = useRouter()
   const searchParams = useSearchParams()
   const nextPath     = searchParams.get('next') || '/dashboard'
@@ -155,5 +156,13 @@ export default function LoginPage() {
       </div>
 
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">Cargando...</div>}>
+      <LoginContent />
+    </Suspense>
   )
 }

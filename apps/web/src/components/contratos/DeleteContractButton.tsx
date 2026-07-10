@@ -20,15 +20,11 @@ export function DeleteContractButton({ id, title }: DeleteContractButtonProps) {
     }
 
     startTransition(async () => {
-      const supabase = createClient()
-      const { error } = await supabase.from('contracts').delete().eq('id', id)
-      
-      if (error) {
+      try {
+        await deleteContractAction(id)
+      } catch (error: any) {
         alert(`No se pudo eliminar el contrato: ${error.message}`)
-        return
       }
-
-      router.refresh()
     })
   }
 
