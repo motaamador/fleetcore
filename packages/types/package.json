@@ -1,0 +1,17 @@
+{
+  "name": "@fleetcore/types",
+  "version": "0.1.0",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "dev": "echo 'types package ready'",
+    "build": "echo 'types package built'",
+    "lint": "echo 'types linted'"
+  },
+  "dependencies": {
+    "decimal.js": "^10.4.3"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  }
+}
