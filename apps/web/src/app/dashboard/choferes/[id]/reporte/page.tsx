@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { Printer, MapPin, CalendarClock, Truck, CheckCircle2 } from 'lucide-react'
 import type { Profile, Trip } from '@fleetcore/types'
+import { PrintButton } from '@/components/ui/PrintButton'
 
 export const metadata: Metadata = {
   title: 'Relación de Viajes | FleetCore',
@@ -40,14 +41,8 @@ export default async function ChoferReportePage({ params }: { params: { id: stri
     <div className="min-h-screen bg-background sm:p-8 font-sans">
       
       {/* Botón Flotante para Imprimir (Oculto en Impresión) */}
-      <div className="fixed top-6 right-6 print:hidden z-50">
-        <button
-          onClick="window.print()"
-          className="btn-primary shadow-xl shadow-primary/20 flex items-center gap-2"
-        >
-          <Printer className="w-5 h-5" />
-          Imprimir / PDF
-        </button>
+      <div className="fixed top-6 right-6 print:hidden z-50 shadow-xl shadow-primary/20 rounded-md">
+        <PrintButton />
       </div>
 
       {/* Contenedor del Documento A4 */}
