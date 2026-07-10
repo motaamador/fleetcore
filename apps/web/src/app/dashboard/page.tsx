@@ -127,7 +127,7 @@ export default async function DashboardPage() {
       id: `trip-${t.id}`,
       type: 'flete',
       text: t.status === 'completed' 
-        ? `Flete a ${t.destination} completado por ${t.profiles?.full_name || 'Conductor'}`
+        ? `Flete a ${t.destination} completado por ${(t.profiles as any)?.full_name || 'Conductor'}`
         : t.status === 'in_transit'
         ? `Flete en tránsito hacia ${t.destination}`
         : `Nuevo flete programado a ${t.destination}`,
