@@ -6,6 +6,8 @@ import type { Trip } from '@fleetcore/types'
 export const metadata: Metadata = { title: 'Fletes y Rutas | FleetCore' }
 export const dynamic = 'force-dynamic'
 
+const PAGE_SIZE = 20
+
 // ── Mock data — refleja la estructura real de Supabase con JOINs ──────────────
 const mockTrips: Trip[] = [
   {
@@ -108,14 +110,18 @@ import { TripStatusDropdown } from '@/components/fletes/TripStatusDropdown'
 import { FletesTabs } from '@/components/fletes/FletesTabs'
 import { SearchInput } from '@/components/ui/SearchInput'
 import { ExportButton } from '@/components/ui/ExportButton'
+import { Pagination } from '@/components/ui/Pagination'
 
 // ── Page ──────────────────────────────────────────────────────────────────────
-export default async function FletesPage({ searchParams }: { searchParams?: { query?: string, tab?: string } }) {
-  const supabase = createClient()
+export default async function FletesPage({ searchParams }: { searchParams?: { query?: string; tab?: string; page?: string } }) {
+  const supabase    = createClient()
+  const currentPage = Math.max(1, parseInt(searchParams?.page || '1', 10))
+  const from        = (currentPage - 1) * PAGE_SIZE
+  const to          = from + PAGE_SIZE - 1
 
   // Ejecutamos consultas en paralelo para alimentar la tabla y el formulario modal
   const [
-    { data: dbTrips, error },
+    { data: dbTrips, error, count },
     { data: dbProjects },
     { data: dbVehicles },
     { data: dbDrivers },
@@ -132,7 +138,7 @@ export default async function FletesPage({ searchParams }: { searchParams?: { qu
           vehicles!inner(plate_number, make, model),
           profiles!driver_id(full_name),
           trip_stops(id, stop_order, location, stop_type, arrived_at, notes)
-        `)
+        `, { count: 'exact' })
 
       if (tab === 'activos') {
         q = q.in('status', ['scheduled', 'in_transit'])
@@ -141,9 +147,9 @@ export default async function FletesPage({ searchParams }: { searchParams?: { qu
       }
       
       if (query) {
-        q = q.or(`origin.ilike.%${query}%,destination.ilike.%${query}%,vehicles.plate_number.ilike.%${query}%`)
+        q = q.or(`origin.ilike.%${query}%,destination.ilike.%${query}%`)
       }
-      return q.order('created_at', { ascending: false })
+      return q.order('created_at', { ascending: false }).range(from, to)
     })(),
     supabase.from('projects').select('id, name, location').order('name'),
     supabase.from('vehicles').select('id, plate_number, make, model').in('status', ['active', 'in_maintenance']),
@@ -151,7 +157,13 @@ export default async function FletesPage({ searchParams }: { searchParams?: { qu
   ])
 
   const trips: Trip[]  = (error || !dbTrips) ? mockTrips : (dbTrips as Trip[])
+  const totalItems     = (error || count === null || count === undefined) ? mockTrips.length : count
+  const totalPages     = Math.ceil(totalItems / PAGE_SIZE)
   const isUsingMockData = !!error
+
+  const paginationParams: Record<string, string> = {}
+  if (searchParams?.query) paginationParams.query = searchParams.query
+  if (searchParams?.tab)   paginationParams.tab   = searchParams.tab
 
   // Formatear data plana para el CSV
   const exportData = trips.map(t => ({
@@ -368,6 +380,16 @@ export default async function FletesPage({ searchParams }: { searchParams?: { qu
             })}
           </tbody>
         </table>
+
+        {/* Paginación */}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          pageSize={PAGE_SIZE}
+          basePath="/dashboard/fletes"
+          existingParams={paginationParams}
+        />
       </div>
 
     </div>

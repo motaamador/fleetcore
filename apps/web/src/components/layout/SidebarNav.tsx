@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Truck, MapPin, Package, Users,
   Building2, FileText, DollarSign, Wrench, Fuel,
-  ScrollText, BarChart3, ChevronRight, HardHat,
+  ScrollText, BarChart3, ChevronRight, HardHat, Settings,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -34,7 +34,8 @@ const navSections = [
       { href: '/dashboard/clientes',    label: 'Clientes',    icon: Building2 },
       { href: '/dashboard/facturacion', label: 'Facturación', icon: FileText },
       { href: '/dashboard/nominas',     label: 'Nóminas',     icon: DollarSign },
-      { href: '/dashboard/contratos',   label: 'Contratos',   icon: ScrollText },
+      { href: '/dashboard/contratos',     label: 'Contratos',      icon: ScrollText },
+      { href: '/dashboard/configuracion', label: 'Configuración',  icon: Settings },
     ],
   },
   {

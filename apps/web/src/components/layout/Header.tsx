@@ -5,18 +5,19 @@ import { usePathname } from 'next/navigation'
 import { MobileMenu } from './MobileMenu'
 
 const routeLabels: Record<string, string> = {
-  '/dashboard':                'Dashboard',
-  '/dashboard/camiones':       'Camiones',
-  '/dashboard/fletes':         'Fletes',
-  '/dashboard/choferes':       'Choferes',
-  '/dashboard/inventario':     'Inventario',
-  '/dashboard/clientes':       'Clientes',
-  '/dashboard/facturacion':    'Facturación',
-  '/dashboard/nominas':        'Nóminas',
-  '/dashboard/contratos':      'Contratos',
-  '/dashboard/mantenimiento':  'Mantenimiento',
-  '/dashboard/combustible':    'Combustible',
-  '/dashboard/reportes':       'Reportes',
+  '/dashboard':                  'Dashboard',
+  '/dashboard/camiones':         'Camiones',
+  '/dashboard/fletes':           'Fletes',
+  '/dashboard/choferes':         'Choferes',
+  '/dashboard/inventario':       'Inventario',
+  '/dashboard/clientes':         'Clientes',
+  '/dashboard/facturacion':      'Facturación',
+  '/dashboard/nominas':          'Nóminas',
+  '/dashboard/contratos':        'Contratos',
+  '/dashboard/mantenimiento':    'Mantenimiento',
+  '/dashboard/combustible':      'Combustible',
+  '/dashboard/reportes':         'Reportes',
+  '/dashboard/configuracion':    'Configuración',
 }
 
 export function Header() {

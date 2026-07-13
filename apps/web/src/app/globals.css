@@ -99,11 +99,16 @@
   }
 
   /* Form Inputs */
-  .input {
+  .input,
+  .input-field {
     @apply w-full px-3 py-2 bg-surface border border-border rounded-lg text-sm
-           text-text-primary placeholder:text-text-muted capitalize
+           text-text-primary placeholder:text-text-muted
            focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-500
            transition-colors duration-150;
+  }
+  select.input,
+  select.input-field {
+    @apply cursor-pointer;
   }
   .label {
     @apply flex items-center gap-1.5 text-sm font-medium text-text-secondary mb-1.5;
