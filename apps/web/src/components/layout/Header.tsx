@@ -6,6 +6,7 @@ import { MobileMenu } from './MobileMenu'
 
 const routeLabels: Record<string, string> = {
   '/dashboard':                  'Dashboard',
+  '/dashboard/mapa':             'Centro de Control GPS',
   '/dashboard/camiones':         'Camiones',
   '/dashboard/fletes':           'Fletes',
   '/dashboard/choferes':         'Choferes',

@@ -31,6 +31,9 @@ export interface Vehicle {
   status: VehicleStatus;
   current_mileage: number;
   rotc?: string; // Permiso ROTC
+  current_lat?: number | null; // Coordenadas GPS (Latitud)
+  current_lng?: number | null; // Coordenadas GPS (Longitud)
+  last_location_update?: string | null;
   created_at: string;
   updated_at: string;
 }

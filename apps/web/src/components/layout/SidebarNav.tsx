@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Truck, MapPin, Package, Users,
   Building2, FileText, DollarSign, Wrench, Fuel,
-  ScrollText, BarChart3, ChevronRight, HardHat, Settings,
+  ScrollText, BarChart3, ChevronRight, HardHat, Settings, Map,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -16,6 +16,7 @@ const navSections = [
     title: 'Principal',
     items: [
       { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+      { href: '/dashboard/mapa', label: 'Mapa GPS', icon: Map },
     ],
   },
   {
