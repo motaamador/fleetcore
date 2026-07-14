@@ -1,7 +1,7 @@
 import {
   Truck, MapPin, HardHat, DollarSign,
   TrendingUp, TrendingDown, AlertTriangle,
-  Clock, CheckCircle2, Circle, Activity, Minus
+  Clock, CheckCircle2, Circle, Activity, Minus, Package
 } from 'lucide-react'
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
@@ -52,6 +52,9 @@ export default async function DashboardPage() {
     { count: tripsLastMonth },
     { data: invoicesThisMonth },
     { data: invoicesLastMonth },
+    { data: overdueInvoicesData },
+    { data: inventoryData },
+    { data: maintenanceData },
   ] = await Promise.all([
     supabase.from('vehicles').select('id, status'),
     supabase.from('trips').select('id, status, projects(name)'),
@@ -81,6 +84,19 @@ export default async function DashboardPage() {
       .eq('status', 'pagada')
       .gte('issued_at', startOfLastMonth.split('T')[0])
       .lte('issued_at', endOfLastMonth.split('T')[0]),
+    // Alertas
+    supabase.from('invoices')
+      .select('id, invoice_num, client_name, due_at, total, currency')
+      .eq('status', 'emitida')
+      .lte('due_at', now.toISOString().split('T')[0])
+      .order('due_at', { ascending: true }),
+    supabase.from('inventory_items')
+      .select('id, name, quantity, min_quantity, unit'),
+    supabase.from('maintenance_records')
+      .select('id, description, scheduled_date, vehicles(plate_number)')
+      .eq('status', 'programado')
+      .lte('scheduled_date', new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
+      .order('scheduled_date', { ascending: true }),
   ])
 
   // 2. Calcular KPIs base
@@ -113,6 +129,13 @@ export default async function DashboardPage() {
   const tripsTrend = tripsLast > 0
     ? ((tripsCurr - tripsLast) / tripsLast) * 100
     : tripsCurr > 0 ? 100 : 0
+    
+  // 3.5 Alertas (Facturas vencidas, Stock bajo, Mantenimiento)
+  const overdueInvoices = overdueInvoicesData || []
+  const lowStockItems = (inventoryData || []).filter(i => i.quantity <= i.min_quantity && i.min_quantity > 0)
+  const upcomingMaintenance = maintenanceData || []
+  
+  const hasAlerts = overdueInvoices.length > 0 || lowStockItems.length > 0 || upcomingMaintenance.length > 0
 
   // 4. KPI Cards con datos reales
   const kpis = [
@@ -292,6 +315,76 @@ export default async function DashboardPage() {
           )
         })}
       </div>
+
+      {/* Alertas */}
+      {hasAlerts && (
+        <div className="bg-warning-bg/30 border border-warning/30 rounded-xl p-6 animate-slide-up">
+          <div className="flex items-center gap-2 mb-4">
+            <AlertTriangle className="w-5 h-5 text-warning" />
+            <h3 className="text-base font-semibold text-text-primary">Alertas y Avisos</h3>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {overdueInvoices.length > 0 && (
+              <div className="bg-background rounded-lg p-4 border border-warning/20">
+                <h4 className="text-sm font-semibold text-danger mb-2 flex items-center gap-1.5">
+                  <DollarSign className="w-4 h-4" /> Facturas Vencidas ({overdueInvoices.length})
+                </h4>
+                <ul className="space-y-2">
+                  {overdueInvoices.slice(0, 3).map(inv => (
+                    <li key={inv.id} className="text-xs flex justify-between">
+                      <span className="truncate pr-2">{inv.invoice_num} - {inv.client_name}</span>
+                      <span className="font-medium text-danger flex-shrink-0">{formatCurrency(inv.total)}</span>
+                    </li>
+                  ))}
+                  {overdueInvoices.length > 3 && (
+                    <li className="text-xs text-text-muted">+{overdueInvoices.length - 3} más...</li>
+                  )}
+                </ul>
+              </div>
+            )}
+            
+            {lowStockItems.length > 0 && (
+              <div className="bg-background rounded-lg p-4 border border-warning/20">
+                <h4 className="text-sm font-semibold text-warning-text mb-2 flex items-center gap-1.5">
+                  <Package className="w-4 h-4" /> Stock Bajo ({lowStockItems.length})
+                </h4>
+                <ul className="space-y-2">
+                  {lowStockItems.slice(0, 3).map(item => (
+                    <li key={item.id} className="text-xs flex justify-between">
+                      <span className="truncate pr-2">{item.name}</span>
+                      <span className="font-medium text-warning-text flex-shrink-0">{item.quantity} / {item.min_quantity} {item.unit}</span>
+                    </li>
+                  ))}
+                  {lowStockItems.length > 3 && (
+                    <li className="text-xs text-text-muted">+{lowStockItems.length - 3} más...</li>
+                  )}
+                </ul>
+              </div>
+            )}
+
+            {upcomingMaintenance.length > 0 && (
+              <div className="bg-background rounded-lg p-4 border border-warning/20">
+                <h4 className="text-sm font-semibold text-info-text mb-2 flex items-center gap-1.5">
+                  <Truck className="w-4 h-4" /> Mantenimiento Próximo ({upcomingMaintenance.length})
+                </h4>
+                <ul className="space-y-2">
+                  {upcomingMaintenance.slice(0, 3).map(maint => (
+                    <li key={maint.id} className="text-xs flex justify-between">
+                      <span className="truncate pr-2">{(maint.vehicles as any)?.plate_number}: {maint.description}</span>
+                      <span className="font-medium text-info-text flex-shrink-0">
+                        {new Date(maint.scheduled_date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })}
+                      </span>
+                    </li>
+                  ))}
+                  {upcomingMaintenance.length > 3 && (
+                    <li className="text-xs text-text-muted">+{upcomingMaintenance.length - 3} más...</li>
+                  )}
+                </ul>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Main Grid */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
