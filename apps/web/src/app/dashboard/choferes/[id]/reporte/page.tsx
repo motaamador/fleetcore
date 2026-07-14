@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
-import { Printer, MapPin, CalendarClock, Truck, CheckCircle2 } from 'lucide-react'
+import { Printer, MapPin, CalendarClock, Truck, CheckCircle2, DollarSign, Droplet } from 'lucide-react'
 import type { Profile, Trip } from '@fleetcore/types'
 import { PrintButton } from '@/components/ui/PrintButton'
 
@@ -36,6 +36,23 @@ export default async function ChoferReportePage({ params }: { params: { id: stri
     .order('updated_at', { ascending: false })
 
   const safeTrips = trips || []
+
+  // 3. Obtener Nóminas
+  const { data: payrolls } = await supabase
+    .from('payroll_records')
+    .select('*')
+    .eq('profile_id', params.id)
+    .order('period_start', { ascending: false })
+
+  // 4. Obtener Combustible
+  const { data: fuels } = await supabase
+    .from('fuel_records')
+    .select('*, vehicle:vehicles(plate_number)')
+    .eq('driver_id', params.id)
+    .order('date', { ascending: false })
+
+  const safePayrolls = payrolls || []
+  const safeFuels = fuels || []
 
   return (
     <div className="min-h-screen bg-background sm:p-8 font-sans">
@@ -137,6 +154,91 @@ export default async function ChoferReportePage({ params }: { params: { id: stri
                     <td className="py-4 px-2">
                       <p className="text-sm font-medium text-slate-900">{trip.project?.name || '—'}</p>
                       <p className="text-xs text-slate-500">{trip.project?.client_name || '—'}</p>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+
+        {/* Tabla de Nóminas */}
+        <div className="mb-8 page-break-inside-avoid">
+          <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+            <DollarSign className="w-4 h-4" /> Pagos de Nómina
+          </h3>
+          {safePayrolls.length === 0 ? (
+             <div className="py-6 text-center text-slate-500 bg-slate-50 rounded-lg border border-dashed border-slate-200">
+               No hay pagos de nómina registrados.
+             </div>
+          ) : (
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b-2 border-slate-800">
+                  <th className="py-3 px-2 text-xs font-bold text-slate-800 uppercase tracking-wider">Período</th>
+                  <th className="py-3 px-2 text-xs font-bold text-slate-800 uppercase tracking-wider">Fecha Pago</th>
+                  <th className="py-3 px-2 text-xs font-bold text-slate-800 uppercase tracking-wider text-right">Neto a Pagar</th>
+                  <th className="py-3 px-2 text-xs font-bold text-slate-800 uppercase tracking-wider text-right">Estado</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {safePayrolls.map((pay: any) => (
+                  <tr key={pay.id}>
+                    <td className="py-4 px-2 text-sm text-slate-900">
+                      {new Date(pay.period_start).toLocaleDateString('es-ES')} - {new Date(pay.period_end).toLocaleDateString('es-ES')}
+                    </td>
+                    <td className="py-4 px-2 text-sm text-slate-900">
+                      {pay.payment_date ? new Date(pay.payment_date).toLocaleDateString('es-ES') : 'Pendiente'}
+                    </td>
+                    <td className="py-4 px-2 text-sm font-bold text-slate-900 text-right">
+                      {new Intl.NumberFormat('en-US', { style: 'currency', currency: pay.currency }).format(pay.net_pay)}
+                    </td>
+                    <td className="py-4 px-2 text-sm text-right">
+                      <span className="capitalize text-slate-500">{pay.status}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+
+        {/* Tabla de Combustible */}
+        <div className="mb-8 page-break-inside-avoid">
+          <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+            <Droplet className="w-4 h-4 text-blue-500" /> Registros de Combustible
+          </h3>
+          {safeFuels.length === 0 ? (
+             <div className="py-6 text-center text-slate-500 bg-slate-50 rounded-lg border border-dashed border-slate-200">
+               No hay consumo de combustible registrado.
+             </div>
+          ) : (
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b-2 border-slate-800">
+                  <th className="py-3 px-2 text-xs font-bold text-slate-800 uppercase tracking-wider">Fecha</th>
+                  <th className="py-3 px-2 text-xs font-bold text-slate-800 uppercase tracking-wider">Vehículo</th>
+                  <th className="py-3 px-2 text-xs font-bold text-slate-800 uppercase tracking-wider">Litros</th>
+                  <th className="py-3 px-2 text-xs font-bold text-slate-800 uppercase tracking-wider text-right">Costo</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {safeFuels.map((fuel: any) => (
+                  <tr key={fuel.id}>
+                    <td className="py-4 px-2 text-sm text-slate-900">
+                      {new Date(fuel.date).toLocaleDateString('es-ES')}
+                    </td>
+                    <td className="py-4 px-2">
+                      <div className="inline-flex items-center gap-1.5 px-2 py-1 bg-slate-100 text-slate-700 rounded text-xs font-mono font-medium">
+                        <Truck className="w-3 h-3" />
+                        {fuel.vehicle?.plate_number || 'S/A'}
+                      </div>
+                    </td>
+                    <td className="py-4 px-2 text-sm text-slate-900">
+                      {fuel.liters} L
+                    </td>
+                    <td className="py-4 px-2 text-sm font-bold text-slate-900 text-right">
+                      {new Intl.NumberFormat('en-US', { style: 'currency', currency: fuel.currency }).format(fuel.cost)}
                     </td>
                   </tr>
                 ))}

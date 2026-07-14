@@ -6,11 +6,37 @@ import { ReportExportActions } from '@/components/reportes/ReportExportActions'
 import { format, subMonths } from 'date-fns'
 import { es } from 'date-fns/locale'
 
+import { DateRangeFilter } from '@/components/reportes/DateRangeFilter'
+
 export const metadata: Metadata = { title: 'Reportes y Analítica | FleetCore' }
 export const dynamic = 'force-dynamic'
 
-export default async function ReportesPage() {
+export default async function ReportesPage({ searchParams }: { searchParams?: { from?: string; to?: string } }) {
   const supabase = createClient()
+  
+  const fromDate = searchParams?.from || null
+  const toDate   = searchParams?.to   || null
+
+  let invQ = supabase.from('invoices').select('total, currency, status, issued_at').eq('status', 'pagada')
+  let payQ = supabase.from('payroll_records').select('net_pay, currency, status, payment_date').eq('status', 'pagado')
+  let mainQ = supabase.from('maintenance_records').select('cost, currency, status, completed_date').eq('status', 'completado')
+  let fuelQ = supabase.from('fuel_records').select('cost, currency, date')
+  let tripsQ = supabase.from('trips').select('id, project_id, status').eq('status', 'completed')
+
+  if (fromDate) {
+    invQ = invQ.gte('issued_at', fromDate)
+    payQ = payQ.gte('payment_date', fromDate)
+    mainQ = mainQ.gte('completed_date', fromDate)
+    fuelQ = fuelQ.gte('date', fromDate)
+    tripsQ = tripsQ.gte('updated_at', fromDate)
+  }
+  if (toDate) {
+    invQ = invQ.lte('issued_at', toDate)
+    payQ = payQ.lte('payment_date', toDate)
+    mainQ = mainQ.lte('completed_date', toDate)
+    fuelQ = fuelQ.lte('date', toDate)
+    tripsQ = tripsQ.lte('updated_at', toDate)
+  }
 
   const [
     { data: invoices },
@@ -20,11 +46,11 @@ export default async function ReportesPage() {
     { data: trips },
     { data: projects },
   ] = await Promise.all([
-    supabase.from('invoices').select('total, currency, status, issued_at').eq('status', 'pagada'),
-    supabase.from('payroll_records').select('net_pay, currency, status, payment_date').eq('status', 'pagado'),
-    supabase.from('maintenance_records').select('cost, currency, status, completed_date').eq('status', 'completado'),
-    supabase.from('fuel_records').select('cost, currency, date'),
-    supabase.from('trips').select('id, project_id, status').eq('status', 'completed'),
+    invQ,
+    payQ,
+    mainQ,
+    fuelQ,
+    tripsQ,
     supabase.from('projects').select('id, name'),
   ])
 
@@ -103,12 +129,15 @@ export default async function ReportesPage() {
     <div className="animate-fade-in space-y-6">
 
       {/* Header */}
-      <div className="page-header">
+      <div className="page-header flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="page-title">Reportes y Analítica</h1>
-          <p className="page-subtitle">Rendimiento financiero y operativo de la flota.</p>
+          <p className="page-subtitle">Rendimiento financiero y operativo de la flota{fromDate || toDate ? ' (Filtrado)' : ''}.</p>
         </div>
-        <ReportExportActions data={exportData} />
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+          <DateRangeFilter />
+          <ReportExportActions data={exportData} />
+        </div>
       </div>
 
       {/* KPIs Globales */}
