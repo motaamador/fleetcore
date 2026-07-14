@@ -3,13 +3,19 @@
 import { useTransition } from 'react'
 import { RefreshCcw, Loader2 } from 'lucide-react'
 import { simulateVehicleLocationsAction } from '@/app/dashboard/mapa/actions'
+import { toast } from 'sonner'
 
 export function SimulatorButton() {
   const [isPending, startTx] = useTransition()
 
   const handleSimulate = () => {
     startTx(async () => {
-      await simulateVehicleLocationsAction()
+      const res = await simulateVehicleLocationsAction()
+      if (res?.error) {
+        toast.error(res.error)
+      } else {
+        toast.success('Coordenadas actualizadas')
+      }
     })
   }
 

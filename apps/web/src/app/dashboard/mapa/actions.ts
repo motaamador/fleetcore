@@ -29,7 +29,9 @@ export async function simulateVehicleLocationsAction() {
       }).eq('id', v.id)
     })
 
-    await Promise.all(promises)
+    const results = await Promise.all(promises)
+    const firstError = results.find(r => r.error)?.error
+    if (firstError) throw new Error(`DB Error: ${firstError.message}`)
     
     revalidatePath('/dashboard/mapa')
     return { success: true }
