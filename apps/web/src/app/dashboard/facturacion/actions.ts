@@ -45,6 +45,44 @@ export async function createInvoiceAction(data: unknown, items: unknown[]) {
   }
 }
 
+export async function updateInvoiceAction(id: string, data: unknown, items: unknown[]) {
+  try {
+    const { supabase } = await requireRole([...ALLOWED_WRITE])
+    // Solo se puede editar facturas en borrador
+    const { data: current } = await supabase
+      .from('invoices').select('status').eq('id', id).single()
+    if (current && !['borrador', 'emitida'].includes(current.status)) {
+      throw new Error('Solo se pueden editar facturas en estado borrador o emitida.')
+    }
+
+    const parsed = InvoiceCreateSchema.partial().parse(data)
+    const { error: invError } = await supabase.from('invoices').update(parsed).eq('id', id)
+    if (invError) throw new Error(invError.message)
+
+    // Reemplazar ítems: eliminar los existentes e insertar los nuevos
+    await supabase.from('invoice_items').delete().eq('invoice_id', id)
+
+    const validItems = z.array(InvoiceItemSchema).parse(items).filter(it => it.description.trim())
+    if (validItems.length > 0) {
+      const { error: itemsError } = await supabase.from('invoice_items').insert(
+        validItems.map(it => ({
+          invoice_id:  id,
+          description: it.description.trim(),
+          quantity:    it.quantity,
+          unit_price:  it.unit_price,
+        }))
+      )
+      if (itemsError) throw new Error(itemsError.message)
+    }
+
+    revalidatePath(PATH)
+    revalidatePath(`/dashboard/facturacion/${id}`)
+    return { success: true }
+  } catch (e) {
+    return handleActionError(e)
+  }
+}
+
 export async function deleteInvoiceAction(id: string) {
   try {
     const { supabase } = await requireRole([...ALLOWED_WRITE])

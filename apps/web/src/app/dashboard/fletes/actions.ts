@@ -45,6 +45,41 @@ export async function createTripAction(data: unknown, stops: unknown[]) {
   }
 }
 
+export async function updateTripAction(id: string, data: unknown, stops: unknown[]) {
+  try {
+    const { supabase } = await requireRole([...ALLOWED_WRITE])
+    const parsed = TripCreateSchema.partial().parse(data)
+
+    const { error: tripError } = await supabase
+      .from('trips')
+      .update(parsed)
+      .eq('id', id)
+
+    if (tripError) throw new Error(tripError.message)
+
+    // Reemplazar paradas: eliminar las existentes e insertar las nuevas
+    await supabase.from('trip_stops').delete().eq('trip_id', id)
+
+    if (stops && stops.length > 0) {
+      const validStops = z.array(TripStopSchema).parse(stops)
+      const stopsToInsert = validStops.map((stop, idx) => ({
+        trip_id:    id,
+        stop_order: idx + 1,
+        location:   stop.location,
+        stop_type:  stop.stop_type,
+        notes:      stop.notes,
+      }))
+      const { error: stopsError } = await supabase.from('trip_stops').insert(stopsToInsert)
+      if (stopsError) throw new Error(stopsError.message)
+    }
+
+    revalidatePath(PATH)
+    return { success: true }
+  } catch (e) {
+    return handleActionError(e)
+  }
+}
+
 export async function deleteTripAction(id: string) {
   try {
     const { supabase } = await requireRole([...ALLOWED_WRITE])

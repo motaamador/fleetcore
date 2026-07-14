@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { NewInvoiceButton } from '@/components/facturacion/NewInvoiceButton'
 import { DeleteInvoiceButton } from '@/components/facturacion/DeleteInvoiceButton'
+import { EditInvoiceButton } from '@/components/facturacion/EditInvoiceButton'
 import { FacturacionTabs } from '@/components/facturacion/FacturacionTabs'
 import { InvoiceStatusDropdown } from '@/components/facturacion/InvoiceStatusDropdown'
 import { SearchInput } from '@/components/ui/SearchInput'
@@ -41,7 +42,7 @@ export default async function FacturacionPage({ searchParams }: { searchParams?:
   
   let q = supabase
     .from('invoices')
-    .select('*, projects(name)')
+    .select('*, projects(name), invoice_items(id, description, quantity, unit_price)')
     
   if (tab === 'pendientes') {
     q = q.in('status', ['borrador', 'emitida'])
@@ -261,6 +262,21 @@ export default async function FacturacionPage({ searchParams }: { searchParams?:
 
                     <td className="table-cell text-right">
                       <div className="flex items-center justify-end gap-1">
+                        <EditInvoiceButton
+                          invoice={{
+                            id: invoice.id,
+                            client_name: invoice.client_name,
+                            client_rif:  invoice.client_rif,
+                            project_id:  invoice.project_id,
+                            currency:    invoice.currency,
+                            tax_pct:     invoice.tax_pct,
+                            due_at:      invoice.due_at,
+                            notes:       invoice.notes,
+                            status:      invoice.status,
+                            invoice_items: invoice.invoice_items,
+                          }}
+                          projects={safeProjects}
+                        />
                         <Link href={`/dashboard/facturacion/${invoice.id}`} className="p-1.5 text-text-muted hover:text-primary hover:bg-primary-50 rounded transition-colors" title="Ver / Imprimir">
                           <Printer className="w-4 h-4" />
                         </Link>

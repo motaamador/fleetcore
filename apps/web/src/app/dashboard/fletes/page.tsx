@@ -106,6 +106,7 @@ const STOP_TYPE_LABELS: Record<string, string> = {
 
 import { NewFleteButton } from '@/components/fletes/NewFleteButton'
 import { DeleteFleteButton } from '@/components/fletes/DeleteFleteButton'
+import { EditFleteButton } from '@/components/fletes/EditFleteButton'
 import { TripStatusDropdown } from '@/components/fletes/TripStatusDropdown'
 import { FletesTabs } from '@/components/fletes/FletesTabs'
 import { SearchInput } from '@/components/ui/SearchInput'
@@ -368,9 +369,12 @@ export default async function FletesPage({ searchParams }: { searchParams?: { qu
                   {/* ── Acciones ── */}
                   <td className="table-cell text-right">
                     <div className="flex items-center justify-end gap-1">
-                      <button className="p-1.5 text-text-muted hover:text-primary hover:bg-primary-50 rounded transition-colors" title="Gestionar Flete">
-                        <Edit2 className="w-4 h-4" />
-                      </button>
+                      <EditFleteButton
+                        trip={trip as any}
+                        projects={dbProjects ?? []}
+                        vehicles={dbVehicles ?? []}
+                        drivers={dbDrivers ?? []}
+                      />
                       <DeleteFleteButton id={trip.id} />
                     </div>
                   </td>
