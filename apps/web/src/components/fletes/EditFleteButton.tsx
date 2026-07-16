@@ -10,9 +10,10 @@ interface EditFleteButtonProps {
   projects: Pick<Project, 'id' | 'name' | 'location'>[]
   vehicles: Pick<Vehicle, 'id' | 'plate_number' | 'make' | 'model'>[]
   drivers:  Pick<Profile, 'id' | 'full_name'>[]
+  bcvRate: number | null
 }
 
-export function EditFleteButton({ trip, projects, vehicles, drivers }: EditFleteButtonProps) {
+export function EditFleteButton({ trip, projects, vehicles, drivers, bcvRate }: EditFleteButtonProps) {
   const [open, setOpen] = useState(false)
   return (
     <>
@@ -31,6 +32,7 @@ export function EditFleteButton({ trip, projects, vehicles, drivers }: EditFlete
           projects={projects}
           vehicles={vehicles}
           drivers={drivers}
+          bcvRate={bcvRate}
         />
       )}
     </>

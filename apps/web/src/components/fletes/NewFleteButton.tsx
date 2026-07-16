@@ -10,9 +10,10 @@ interface NewFleteButtonProps {
   projects: Pick<Project, 'id' | 'name' | 'location'>[]
   vehicles: Pick<Vehicle, 'id' | 'plate_number' | 'make' | 'model'>[]
   drivers: Pick<Profile, 'id' | 'full_name'>[]
+  bcvRate: number | null
 }
 
-export function NewFleteButton({ projects, vehicles, drivers }: NewFleteButtonProps) {
+export function NewFleteButton({ projects, vehicles, drivers, bcvRate }: NewFleteButtonProps) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
 
@@ -37,6 +38,7 @@ export function NewFleteButton({ projects, vehicles, drivers }: NewFleteButtonPr
         projects={projects}
         vehicles={vehicles}
         drivers={drivers}
+        bcvRate={bcvRate}
       />
     </>
   )

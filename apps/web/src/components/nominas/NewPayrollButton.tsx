@@ -7,7 +7,12 @@ import { NewPayrollModal } from './NewPayrollModal'
 
 interface Profile { id: string; full_name: string; role: string; cedula_identidad?: string }
 
-export function NewPayrollButton({ employees }: { employees: Profile[] }) {
+interface Props {
+  employees: Profile[]
+  bcvRate: number | null
+}
+
+export function NewPayrollButton({ employees, bcvRate }: Props) {
   const [open, setOpen] = useState(false)
   const router = useRouter()
 
@@ -27,6 +32,7 @@ export function NewPayrollButton({ employees }: { employees: Profile[] }) {
         onClose={() => setOpen(false)}
         onSuccess={handleSuccess}
         employees={employees}
+        bcvRate={bcvRate}
       />
     </>
   )

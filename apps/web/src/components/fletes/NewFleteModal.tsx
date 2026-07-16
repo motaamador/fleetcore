@@ -12,6 +12,7 @@ interface NewFleteModalProps {
   projects: Pick<Project, 'id' | 'name' | 'location'>[]
   vehicles: Pick<Vehicle, 'id' | 'plate_number' | 'make' | 'model'>[]
   drivers: Pick<Profile, 'id' | 'full_name'>[]
+  bcvRate: number | null
 }
 
 interface StopData {
@@ -53,7 +54,7 @@ const INITIAL_FORM: FormData = {
   viaticos_currency: 'USD',
 }
 
-export function NewFleteModal({ open, onClose, onSuccess, projects, vehicles, drivers }: NewFleteModalProps) {
+export function NewFleteModal({ open, onClose, onSuccess, projects, vehicles, drivers, bcvRate }: NewFleteModalProps) {
   const [form, setForm] = useState<FormData>(INITIAL_FORM)
   const [stops, setStops] = useState<StopData[]>([])
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -333,13 +334,27 @@ export function NewFleteModal({ open, onClose, onSuccess, projects, vehicles, dr
                       <input type="number" step="0.01" min="0" className="input" placeholder="0.00" value={form.precio_flete} onChange={(e) => set('precio_flete', e.target.value)} />
                     </div>
                     <div>
-                      <select className="input" value={form.precio_currency} onChange={(e) => set('precio_currency', e.target.value)}>
-                        <option value="USD">USD $</option>
-                        <option value="VES">VES Bs.</option>
-                        <option value="EUR">EUR €</option>
+                      <select className="input w-24" value={form.precio_currency} onChange={(e) => set('precio_currency', e.target.value)}>
+                        <option value="USD">USD</option>
+                        <option value="VES">VES</option>
                       </select>
                     </div>
                   </div>
+                  {bcvRate && form.precio_flete && form.precio_currency === 'USD' && (
+                    <p className="text-xs text-text-muted mt-1">
+                      Aprox: Bs. {(parseFloat(form.precio_flete) * bcvRate).toLocaleString('es-VE', {minimumFractionDigits: 2})} (Tasa: {bcvRate})
+                    </p>
+                  )}
+                  {bcvRate && form.precio_currency === 'VES' && (
+                    <div className="mt-1 flex items-center gap-2">
+                      <button type="button" onClick={() => {
+                        const usdVal = prompt('Monto del flete en USD:')
+                        if (usdVal && !isNaN(Number(usdVal))) set('precio_flete', (Number(usdVal) * bcvRate).toFixed(2))
+                      }} className="text-xs bg-primary-50 hover:bg-primary-100 text-primary-700 px-2 py-0.5 rounded border border-primary-200 transition-colors">
+                        Calcular desde USD (Tasa: {bcvRate})
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Bono chofer */}
@@ -350,13 +365,27 @@ export function NewFleteModal({ open, onClose, onSuccess, projects, vehicles, dr
                       <input type="number" step="0.01" min="0" className="input" placeholder="0.00" value={form.bono_chofer} onChange={(e) => set('bono_chofer', e.target.value)} />
                     </div>
                     <div>
-                      <select className="input" value={form.bono_currency} onChange={(e) => set('bono_currency', e.target.value)}>
-                        <option value="USD">USD $</option>
-                        <option value="VES">VES Bs.</option>
-                        <option value="EUR">EUR €</option>
+                      <select className="input w-24" value={form.bono_currency} onChange={(e) => set('bono_currency', e.target.value)}>
+                        <option value="USD">USD</option>
+                        <option value="VES">VES</option>
                       </select>
                     </div>
                   </div>
+                  {bcvRate && form.bono_chofer && form.bono_currency === 'USD' && (
+                    <p className="text-xs text-text-muted mt-1">
+                      Aprox: Bs. {(parseFloat(form.bono_chofer) * bcvRate).toLocaleString('es-VE', {minimumFractionDigits: 2})}
+                    </p>
+                  )}
+                  {bcvRate && form.bono_currency === 'VES' && (
+                    <div className="mt-1 flex items-center gap-2">
+                      <button type="button" onClick={() => {
+                        const usdVal = prompt('Bono en USD:')
+                        if (usdVal && !isNaN(Number(usdVal))) set('bono_chofer', (Number(usdVal) * bcvRate).toFixed(2))
+                      }} className="text-xs bg-primary-50 hover:bg-primary-100 text-primary-700 px-2 py-0.5 rounded border border-primary-200 transition-colors">
+                        Calcular desde USD
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Viáticos */}
@@ -367,13 +396,27 @@ export function NewFleteModal({ open, onClose, onSuccess, projects, vehicles, dr
                       <input type="number" step="0.01" min="0" className="input" placeholder="0.00" value={form.viaticos} onChange={(e) => set('viaticos', e.target.value)} />
                     </div>
                     <div>
-                      <select className="input" value={form.viaticos_currency} onChange={(e) => set('viaticos_currency', e.target.value)}>
-                        <option value="USD">USD $</option>
-                        <option value="VES">VES Bs.</option>
-                        <option value="EUR">EUR €</option>
+                      <select className="input w-24" value={form.viaticos_currency} onChange={(e) => set('viaticos_currency', e.target.value)}>
+                        <option value="USD">USD</option>
+                        <option value="VES">VES</option>
                       </select>
                     </div>
                   </div>
+                  {bcvRate && form.viaticos && form.viaticos_currency === 'USD' && (
+                    <p className="text-xs text-text-muted mt-1">
+                      Aprox: Bs. {(parseFloat(form.viaticos) * bcvRate).toLocaleString('es-VE', {minimumFractionDigits: 2})}
+                    </p>
+                  )}
+                  {bcvRate && form.viaticos_currency === 'VES' && (
+                    <div className="mt-1 flex items-center gap-2">
+                      <button type="button" onClick={() => {
+                        const usdVal = prompt('Viáticos en USD:')
+                        if (usdVal && !isNaN(Number(usdVal))) set('viaticos', (Number(usdVal) * bcvRate).toFixed(2))
+                      }} className="text-xs bg-primary-50 hover:bg-primary-100 text-primary-700 px-2 py-0.5 rounded border border-primary-200 transition-colors">
+                        Calcular desde USD
+                      </button>
+                    </div>
+                  )}
                 </div>
 
               </div>

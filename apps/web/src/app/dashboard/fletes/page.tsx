@@ -3,6 +3,7 @@ import { Plus, Search, Filter, MapPin, Truck, CalendarClock, Edit2, AlertCircle,
 import { createClient } from '@/lib/supabase/server'
 import type { Trip } from '@fleetcore/types'
 import { GenerateInvoiceButton } from '@/components/fletes/GenerateInvoiceButton'
+import { getBcvRate } from '@/lib/bcv'
 
 export const metadata: Metadata = { title: 'Fletes y Rutas | FleetCore' }
 export const dynamic = 'force-dynamic'
@@ -127,6 +128,7 @@ export default async function FletesPage({ searchParams }: { searchParams?: { qu
     { data: dbProjects },
     { data: dbVehicles },
     { data: dbDrivers },
+    bcvRate,
   ] = await Promise.all([
     (async () => {
       const query = searchParams?.query || ''
@@ -155,7 +157,8 @@ export default async function FletesPage({ searchParams }: { searchParams?: { qu
     })(),
     supabase.from('projects').select('id, name, location').order('name'),
     supabase.from('vehicles').select('id, plate_number, make, model').in('status', ['active', 'in_maintenance']),
-    supabase.from('profiles').select('id, full_name').in('role', ['driver', 'dispatcher']).eq('is_active', true)
+    supabase.from('profiles').select('id, full_name').in('role', ['driver', 'dispatcher']).eq('is_active', true),
+    getBcvRate()
   ])
 
   const trips: Trip[]  = (error || !dbTrips) ? mockTrips : (dbTrips as Trip[])
@@ -197,6 +200,7 @@ export default async function FletesPage({ searchParams }: { searchParams?: { qu
           projects={dbProjects || []} 
           vehicles={dbVehicles || []} 
           drivers={dbDrivers || []} 
+          bcvRate={bcvRate}
         />
       </div>
 
@@ -410,6 +414,7 @@ export default async function FletesPage({ searchParams }: { searchParams?: { qu
                         projects={dbProjects ?? []}
                         vehicles={dbVehicles ?? []}
                         drivers={dbDrivers ?? []}
+                        bcvRate={bcvRate}
                       />
                       <DeleteFleteButton id={trip.id} />
                     </div>

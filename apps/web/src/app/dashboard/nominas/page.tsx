@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { DollarSign, CheckCircle2, Clock, XCircle, Users, User, Briefcase, Calculator, Printer } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
+import { getBcvRate } from '@/lib/bcv'
 import { NewPayrollButton } from '@/components/nominas/NewPayrollButton'
 import { EditPayrollButton } from '@/components/nominas/EditPayrollButton'
 import { DeletePayrollButton } from '@/components/nominas/DeletePayrollButton'
@@ -54,19 +55,23 @@ export default async function NominasPage({ searchParams }: { searchParams?: { q
     queryBuilder = queryBuilder.or(`profiles.full_name.ilike.%${query}%`)
   }
   
-  const { data: records, error: fetchError } = await queryBuilder.order('period_start', { ascending: false })
+  const [
+    { data: records, error: fetchError },
+    { data: employees },
+    bcvRate,
+  ] = await Promise.all([
+    queryBuilder.order('period_start', { ascending: false }),
+    supabase
+      .from('profiles')
+      .select('id, full_name, role, cedula_identidad')
+      .in('role', ['driver', 'dispatcher'])
+      .order('full_name'),
+    getBcvRate()
+  ])
 
   if (fetchError) {
     console.error("Error fetching payroll records:", fetchError)
   }
-
-  // 2. Obtener empleados/choferes para el selector
-  // Incluir choferes y despachadores, excluyendo admins para nómina operativa
-  const { data: employees } = await supabase
-    .from('profiles')
-    .select('id, full_name, role, cedula_identidad')
-    .in('role', ['driver', 'dispatcher'])
-    .order('full_name')
 
   const safeRecords   = records || []
   const safeEmployees = employees || []
@@ -107,7 +112,7 @@ export default async function NominasPage({ searchParams }: { searchParams?: { q
           <h1 className="page-title">Nóminas y Pagos</h1>
           <p className="page-subtitle">Gestión de pagos, quincenas, bonos por fletes y deducciones del personal.</p>
         </div>
-        <NewPayrollButton employees={safeEmployees} />
+        <NewPayrollButton employees={safeEmployees} bcvRate={bcvRate} />
       </div>
 
       {/* KPIs */}

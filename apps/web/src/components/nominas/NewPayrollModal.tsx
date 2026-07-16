@@ -14,6 +14,7 @@ interface NewPayrollModalProps {
   onClose: () => void
   onSuccess: () => void
   employees: Profile[]
+  bcvRate: number | null
 }
 
 interface FormData {
@@ -70,7 +71,7 @@ const STATUS_OPTIONS = [
 function formatNum(val: string): number { return parseFloat(val) || 0 }
 
 // ── Componente ─────────────────────────────────────────────────────────────────
-export function NewPayrollModal({ open, onClose, onSuccess, employees }: NewPayrollModalProps) {
+export function NewPayrollModal({ open, onClose, onSuccess, employees, bcvRate }: NewPayrollModalProps) {
   const [form, setForm] = useState<FormData>(INITIAL_FORM)
   const [errors, setErrors] = useState<Partial<FormData>>({})
   const [isPending, startTransition] = useTransition()
@@ -345,11 +346,19 @@ export function NewPayrollModal({ open, onClose, onSuccess, employees }: NewPayr
             </div>
 
             {/* Total Neto Card */}
-            <div className="bg-primary-50 border border-primary-100 rounded-lg p-4 flex items-center justify-between mt-2">
-              <span className="text-primary-700 font-semibold">Total Neto a Pagar</span>
-              <span className="text-xl font-bold text-primary-900">
-                {sym} {new Intl.NumberFormat('es-VE', { minimumFractionDigits: 2 }).format(net)}
-              </span>
+            <div className="bg-primary-50 border border-primary-100 rounded-lg p-4 flex flex-col gap-1 mt-2">
+              <div className="flex items-center justify-between">
+                <span className="text-primary-700 font-semibold">Total Neto a Pagar</span>
+                <span className="text-xl font-bold text-primary-900">
+                  {sym} {new Intl.NumberFormat('es-VE', { minimumFractionDigits: 2 }).format(net)}
+                </span>
+              </div>
+              {bcvRate && form.currency === 'USD' && net > 0 && (
+                <div className="flex items-center justify-between text-xs text-primary-700/80 pt-1 border-t border-primary-200 mt-1">
+                  <span>Equivalente BCV</span>
+                  <span className="font-medium">Bs. {(net * bcvRate).toLocaleString('es-VE', {minimumFractionDigits: 2})} (Tasa: {bcvRate})</span>
+                </div>
+              )}
             </div>
           </div>
 
