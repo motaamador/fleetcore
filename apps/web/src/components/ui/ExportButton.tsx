@@ -17,19 +17,19 @@ export function ExportButton({ data, filename }: ExportButtonProps) {
     // Extraer cabeceras (keys del primer objeto)
     const headers = Object.keys(data[0])
     
-    // Convertir data a formato CSV
+    // Convertir data a formato CSV (usando punto y coma para Excel en español)
     const csvContent = [
-      headers.join(','),
+      headers.join(';'),
       ...data.map(row => 
         headers.map(header => {
           let cell = row[header] === null || row[header] === undefined ? '' : row[header]
-          // Escapar comillas dobles y envolver en comillas si contiene comas o saltos de línea
+          // Escapar comillas dobles y envolver en comillas si contiene punto y coma o saltos de línea
           cell = String(cell).replace(/"/g, '""')
-          if (cell.search(/("|,|\n)/g) >= 0) {
+          if (cell.search(/(";|;\n)/g) >= 0 || cell.includes(';')) {
             cell = `"${cell}"`
           }
           return cell
-        }).join(',')
+        }).join(';')
       )
     ].join('\n')
 
