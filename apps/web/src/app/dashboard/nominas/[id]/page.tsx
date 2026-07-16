@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { ArrowLeft, User } from 'lucide-react'
 import Link from 'next/link'
 import { PrintButton } from '@/components/ui/PrintButton'
+import { getBcvRate } from '@/lib/bcv'
 
 export const metadata: Metadata = { title: 'Recibo de Nómina | FleetCore' }
 
@@ -21,7 +22,11 @@ export default async function PayrollPrintPage({ params }: { params: { id: strin
 
   if (!record) return notFound()
 
+  const bcvRate = await getBcvRate()
   const currencySymbol = record.currency === 'USD' ? '$' : record.currency === 'EUR' ? '€' : 'Bs.'
+
+  const formatAmount = (val: number) => Number(val).toLocaleString('en-US', {minimumFractionDigits: 2})
+  const formatBs = (val: number) => bcvRate ? `(Bs. ${(val * bcvRate).toLocaleString('es-VE', {minimumFractionDigits: 2})})` : ''
 
   return (
     <div className="max-w-3xl mx-auto py-8 print:py-0 print:max-w-full">
@@ -68,6 +73,11 @@ export default async function PayrollPrintPage({ params }: { params: { id: strin
                 Pagado el: {new Date(record.payment_date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })}
               </p>
             )}
+            {record.currency === 'USD' && bcvRate && (
+              <p className="text-xs text-blue-600 font-medium mt-2">
+                Tasa BCV Aplicada: Bs. {bcvRate}
+              </p>
+            )}
           </div>
         </div>
 
@@ -83,13 +93,19 @@ export default async function PayrollPrintPage({ params }: { params: { id: strin
           <tbody>
             <tr className="border-b border-gray-100">
               <td className="py-4 text-sm text-gray-800 font-medium">Salario Base</td>
-              <td className="py-4 text-sm text-gray-700 text-right">{currencySymbol} {Number(record.base_salary).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+              <td className="py-4 text-sm text-gray-700 text-right">
+                {currencySymbol} {formatAmount(record.base_salary)}
+                {record.currency === 'USD' && bcvRate && <div className="text-xs text-gray-400 mt-0.5">{formatBs(record.base_salary)}</div>}
+              </td>
               <td className="py-4 text-sm text-gray-400 text-right">—</td>
             </tr>
             {(record.bonuses > 0) && (
               <tr className="border-b border-gray-100">
                 <td className="py-4 text-sm text-gray-800">Bonificaciones y Extras</td>
-                <td className="py-4 text-sm text-gray-700 text-right">{currencySymbol} {Number(record.bonuses).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                <td className="py-4 text-sm text-gray-700 text-right">
+                  {currencySymbol} {formatAmount(record.bonuses)}
+                  {record.currency === 'USD' && bcvRate && <div className="text-xs text-gray-400 mt-0.5">{formatBs(record.bonuses)}</div>}
+                </td>
                 <td className="py-4 text-sm text-gray-400 text-right">—</td>
               </tr>
             )}
@@ -97,7 +113,10 @@ export default async function PayrollPrintPage({ params }: { params: { id: strin
               <tr className="border-b border-gray-100">
                 <td className="py-4 text-sm text-gray-800">Deducciones (Préstamos, Faltas)</td>
                 <td className="py-4 text-sm text-gray-400 text-right">—</td>
-                <td className="py-4 text-sm text-red-600 text-right">-{currencySymbol} {Number(record.deductions).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                <td className="py-4 text-sm text-red-600 text-right">
+                  -{currencySymbol} {formatAmount(record.deductions)}
+                  {record.currency === 'USD' && bcvRate && <div className="text-xs text-red-400/70 mt-0.5">{formatBs(record.deductions)}</div>}
+                </td>
               </tr>
             )}
           </tbody>
@@ -105,10 +124,18 @@ export default async function PayrollPrintPage({ params }: { params: { id: strin
 
         {/* Total Neto */}
         <div className="flex justify-end mb-16">
-          <div className="w-64">
-            <div className="flex justify-between text-xl font-black text-gray-900 bg-gray-100 p-4 rounded-lg">
-              <span>NETO A PAGAR</span>
-              <span>{currencySymbol} {Number(record.net_pay).toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
+          <div className="w-72">
+            <div className="flex flex-col text-right bg-gray-100 p-4 rounded-lg">
+              <div className="flex justify-between text-xl font-black text-gray-900">
+                <span>NETO A PAGAR</span>
+                <span>{currencySymbol} {formatAmount(record.net_pay)}</span>
+              </div>
+              {record.currency === 'USD' && bcvRate && (
+                <div className="flex justify-between text-sm font-semibold text-gray-600 mt-2 pt-2 border-t border-gray-300">
+                  <span>Equivalente BCV</span>
+                  <span>Bs. {(record.net_pay * bcvRate).toLocaleString('es-VE', {minimumFractionDigits: 2})}</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
