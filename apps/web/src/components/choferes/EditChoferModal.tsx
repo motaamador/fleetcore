@@ -19,14 +19,18 @@ interface FormData {
   phone_number: string
   licencia_tipo: string
   role: 'driver' | 'dispatcher'
+  bank_account_number: string
+  bank_name: string
 }
 
 const INITIAL_FORM: FormData = {
   full_name: '',
   cedula_identidad: '',
   phone_number: '',
-  licencia_tipo: '5ta', // Por defecto una licencia de carga pesada común
+  licencia_tipo: '5ta',
   role: 'driver',
+  bank_account_number: '',
+  bank_name: '',
 }
 
 const LICENCIAS = ['3ra', '4ta', '5ta', '6ta', 'Especial']
@@ -45,6 +49,8 @@ export function EditChoferModal({ open, onClose, onSuccess, chofer }: EditChofer
         phone_number: chofer.phone_number || '',
         licencia_tipo: chofer.licencia_tipo || '5ta',
         role: (chofer.role as 'driver' | 'dispatcher') || 'driver',
+        bank_account_number: chofer.bank_account_number || '',
+        bank_name: chofer.bank_name || '',
       })
     }
   }, [open, chofer])
@@ -72,11 +78,13 @@ export function EditChoferModal({ open, onClose, onSuccess, chofer }: EditChofer
     startTransition(async () => {
       try {
         await updateChofer(chofer.id, {
-          full_name:        form.full_name.trim(),
-          cedula_identidad: form.cedula_identidad.trim(),
-          phone_number:     form.phone_number.trim() || null,
-          licencia_tipo:    form.licencia_tipo,
-          role:             form.role,
+          full_name:            form.full_name.trim(),
+          cedula_identidad:     form.cedula_identidad.trim(),
+          phone_number:         form.phone_number.trim() || null,
+          licencia_tipo:        form.licencia_tipo,
+          role:                 form.role,
+          bank_account_number:  form.bank_account_number.trim() || null,
+          bank_name:            form.bank_name.trim() || null,
         })
         onSuccess()
         onClose()
@@ -181,6 +189,35 @@ export function EditChoferModal({ open, onClose, onSuccess, chofer }: EditChofer
               <option value="driver">Chofer / Conductor</option>
               <option value="dispatcher">Despachador</option>
             </select>
+          </div>
+
+          {/* Datos bancarios */}
+          <div className="pt-2 border-t border-border">
+            <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-3 flex items-center gap-1.5">
+              <CreditCard className="w-3.5 h-3.5" /> Datos Bancarios (para pago de nómina)
+            </p>
+            <div className="space-y-4">
+              <div>
+                <label className="label">Banco</label>
+                <input
+                  type="text"
+                  className="input"
+                  placeholder="Ej: Banesco, Banco de Venezuela, Mercantil..."
+                  value={form.bank_name}
+                  onChange={(e) => set('bank_name', e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="label">Número de Cuenta</label>
+                <input
+                  type="text"
+                  className="input font-mono"
+                  placeholder="Ej: 0134-0000-00-0000000000"
+                  value={form.bank_account_number}
+                  onChange={(e) => set('bank_account_number', e.target.value)}
+                />
+              </div>
+            </div>
           </div>
 
         </form>

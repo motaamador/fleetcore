@@ -15,6 +15,8 @@ export interface Profile {
   avatar_url?: string;
   cedula_identidad?: string;
   licencia_tipo?: string;
+  bank_account_number?: string | null; // Número de cuenta bancaria
+  bank_name?: string | null;           // Nombre del banco
   is_active: boolean;
   created_at: string;
   updated_at: string;

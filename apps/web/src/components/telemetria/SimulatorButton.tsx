@@ -11,7 +11,7 @@ export function SimulatorButton() {
   const handleSimulate = () => {
     startTx(async () => {
       const res = await simulateVehicleLocationsAction()
-      if (res?.error) {
+      if (res && 'error' in res && res.error) {
         toast.error(res.error)
       } else {
         toast.success('Coordenadas actualizadas')

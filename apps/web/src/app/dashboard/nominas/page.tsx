@@ -42,7 +42,7 @@ export default async function NominasPage({ searchParams }: { searchParams?: { q
   
   let queryBuilder = supabase
     .from('payroll_records')
-    .select('*, profiles!payroll_records_profile_id_fkey!inner(full_name, role, cedula_identidad)')
+    .select('*, profiles!payroll_records_profile_id_fkey!inner(full_name, role, cedula_identidad, bank_account_number, bank_name)')
     
   if (tab === 'pendientes') {
     queryBuilder = queryBuilder.in('status', ['borrador', 'aprobado'])
@@ -213,6 +213,11 @@ export default async function NominasPage({ searchParams }: { searchParams?: { q
                           <p className="text-xs text-text-muted uppercase tracking-wider">
                             {p?.role === 'driver' ? 'Chofer' : p?.role} {p?.cedula_identidad ? `• C.I: ${p.cedula_identidad}` : ''}
                           </p>
+                          {p?.bank_account_number && (
+                            <p className="text-xs text-text-muted font-mono mt-0.5">
+                              {p?.bank_name ? `${p.bank_name} · ` : ''}{p.bank_account_number}
+                            </p>
+                          )}
                         </div>
                       </div>
                     </td>
