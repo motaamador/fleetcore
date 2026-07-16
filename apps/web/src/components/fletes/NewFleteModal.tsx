@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { X, MapPin, Truck, Users, HardHat, Package, Plus, Trash2, ArrowRight, Loader2, Navigation } from 'lucide-react'
+import { X, MapPin, Truck, Users, HardHat, Package, Plus, Trash2, ArrowRight, Loader2, Navigation, Calendar } from 'lucide-react'
 import { createTripAction } from '@/app/dashboard/fletes/actions'
 import type { StopType, Project, Vehicle, Profile } from '@fleetcore/types'
 
@@ -28,6 +28,7 @@ interface FormData {
   origin: string
   destination: string
   distance_km: string
+  departure_time: string
   precio_flete: string
   precio_currency: string
   bono_chofer: string
@@ -43,6 +44,7 @@ const INITIAL_FORM: FormData = {
   origin: '',
   destination: '',
   distance_km: '',
+  departure_time: '',
   precio_flete: '',
   precio_currency: 'USD',
   bono_chofer: '',
@@ -87,6 +89,7 @@ export function NewFleteModal({ open, onClose, onSuccess, projects, vehicles, dr
     if (!form.destination.trim()) newErrors.destination = 'Destino requerido'
     if (!form.vehicle_id)         newErrors.vehicle_id  = 'Selecciona un vehículo'
     if (!form.driver_id)          newErrors.driver_id   = 'Selecciona un conductor'
+    if (!form.departure_time)     newErrors.departure_time = 'Requerido'
     
     stops.forEach((stop, idx) => {
       if (!stop.location.trim()) newErrors[`stop_${idx}`] = 'Ubicación requerida'
@@ -110,6 +113,7 @@ export function NewFleteModal({ open, onClose, onSuccess, projects, vehicles, dr
           origin:      form.origin.trim(),
           destination: form.destination.trim(),
           distance_km: form.distance_km ? parseFloat(form.distance_km) : null,
+          departure_time: form.departure_time ? new Date(form.departure_time).toISOString() : null,
           precio_flete:      form.precio_flete ? parseFloat(form.precio_flete) : null,
           precio_currency:   form.precio_currency || 'USD',
           bono_chofer:       form.bono_chofer ? parseFloat(form.bono_chofer) : null,
@@ -206,6 +210,20 @@ export function NewFleteModal({ open, onClose, onSuccess, projects, vehicles, dr
                     ))}
                   </select>
                   {errors.driver_id && <p className="text-xs text-danger mt-1">{errors.driver_id}</p>}
+                </div>
+
+                {/* Fecha Programada */}
+                <div>
+                  <label className="label">
+                    <Calendar className="w-3.5 h-3.5" /> Fecha Programada <span className="text-danger">*</span>
+                  </label>
+                  <input 
+                    type="datetime-local" 
+                    className={`input ${errors.departure_time ? 'border-danger' : ''}`} 
+                    value={form.departure_time} 
+                    onChange={(e) => set('departure_time', e.target.value)} 
+                  />
+                  {errors.departure_time && <p className="text-xs text-danger mt-1">{errors.departure_time}</p>}
                 </div>
 
               </div>

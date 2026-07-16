@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { X, Navigation, MapPin, Truck, Users, HardHat, Package, Plus, Trash2, Loader2, Edit2 } from 'lucide-react'
+import { X, Navigation, MapPin, Truck, Users, HardHat, Package, Plus, Trash2, Loader2, Edit2, Calendar } from 'lucide-react'
 import { updateTripAction } from '@/app/dashboard/fletes/actions'
 import type { StopType, Project, Vehicle, Profile, Trip, TripStop } from '@fleetcore/types'
 
@@ -28,6 +28,7 @@ interface FormData {
   origin:      string
   destination: string
   distance_km: string
+  departure_time: string
   notes:       string
   precio_flete: string
   precio_currency: string
@@ -45,6 +46,7 @@ export function EditFleteModal({ open, onClose, trip, projects, vehicles, driver
     origin:      trip.origin      ?? '',
     destination: trip.destination ?? '',
     distance_km: trip.distance_km?.toString() ?? '',
+    departure_time: trip.departure_time ? new Date(trip.departure_time).toISOString().slice(0, 16) : '',
     notes:       (trip as any).notes ?? '',
     precio_flete:      trip.precio_flete?.toString() ?? '',
     precio_currency:   trip.precio_currency ?? 'USD',
@@ -89,6 +91,7 @@ export function EditFleteModal({ open, onClose, trip, projects, vehicles, driver
     if (!form.destination.trim()) e.destination = 'Destino requerido'
     if (!form.vehicle_id)         e.vehicle_id  = 'Selecciona un vehículo'
     if (!form.driver_id)          e.driver_id   = 'Selecciona un conductor'
+    if (!form.departure_time)     e.departure_time = 'Requerido'
     stops.forEach((s, i) => { if (!s.location.trim()) e[`stop_${i}`] = 'Ubicación requerida' })
     setErrors(e)
     return Object.keys(e).length === 0
@@ -106,6 +109,7 @@ export function EditFleteModal({ open, onClose, trip, projects, vehicles, driver
         origin:      form.origin.trim(),
         destination: form.destination.trim(),
         distance_km: form.distance_km ? parseFloat(form.distance_km) : null,
+        departure_time: form.departure_time ? new Date(form.departure_time).toISOString() : null,
         notes:       form.notes.trim() || null,
         precio_flete:      form.precio_flete ? parseFloat(form.precio_flete) : null,
         precio_currency:   form.precio_currency || 'USD',
@@ -180,6 +184,11 @@ export function EditFleteModal({ open, onClose, trip, projects, vehicles, driver
                     {drivers.map(d => <option key={d.id} value={d.id}>{d.full_name}</option>)}
                   </select>
                   {errors.driver_id && <p className="text-xs text-danger mt-1">{errors.driver_id}</p>}
+                </div>
+                <div>
+                  <label className="label"><Calendar className="w-3.5 h-3.5" /> Fecha Programada <span className="text-danger">*</span></label>
+                  <input type="datetime-local" className={`input ${errors.departure_time ? 'border-danger' : ''}`} value={form.departure_time} onChange={e => set('departure_time', e.target.value)} />
+                  {errors.departure_time && <p className="text-xs text-danger mt-1">{errors.departure_time}</p>}
                 </div>
               </div>
             </div>
