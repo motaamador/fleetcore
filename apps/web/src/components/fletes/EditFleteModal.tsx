@@ -29,6 +29,12 @@ interface FormData {
   destination: string
   distance_km: string
   notes:       string
+  precio_flete: string
+  precio_currency: string
+  bono_chofer: string
+  bono_currency: string
+  viaticos: string
+  viaticos_currency: string
 }
 
 export function EditFleteModal({ open, onClose, trip, projects, vehicles, drivers }: EditFleteModalProps) {
@@ -40,6 +46,12 @@ export function EditFleteModal({ open, onClose, trip, projects, vehicles, driver
     destination: trip.destination ?? '',
     distance_km: trip.distance_km?.toString() ?? '',
     notes:       (trip as any).notes ?? '',
+    precio_flete:      trip.precio_flete?.toString() ?? '',
+    precio_currency:   trip.precio_currency ?? 'USD',
+    bono_chofer:       trip.bono_chofer?.toString() ?? '',
+    bono_currency:     trip.bono_currency ?? 'USD',
+    viaticos:          trip.viaticos?.toString() ?? '',
+    viaticos_currency: trip.viaticos_currency ?? 'USD',
   })
   const [stops, setStops]       = useState<StopData[]>(
     (trip.trip_stops ?? [])
@@ -95,6 +107,12 @@ export function EditFleteModal({ open, onClose, trip, projects, vehicles, driver
         destination: form.destination.trim(),
         distance_km: form.distance_km ? parseFloat(form.distance_km) : null,
         notes:       form.notes.trim() || null,
+        precio_flete:      form.precio_flete ? parseFloat(form.precio_flete) : null,
+        precio_currency:   form.precio_currency || 'USD',
+        bono_chofer:       form.bono_chofer ? parseFloat(form.bono_chofer) : null,
+        bono_currency:     form.bono_currency || 'USD',
+        viaticos:          form.viaticos ? parseFloat(form.viaticos) : null,
+        viaticos_currency: form.viaticos_currency || 'USD',
       }, stops.map(s => ({ location: s.location, stop_type: s.stop_type, notes: s.notes || null })))
 
       if (!result.success && 'error' in result) {
@@ -253,6 +271,60 @@ export function EditFleteModal({ open, onClose, trip, projects, vehicles, driver
                   ))}
                 </div>
               )}
+            </div>
+
+            <hr className="border-border" />
+
+            {/* Financiero */}
+            <div>
+              <h3 className="text-sm font-bold text-text-primary mb-3 uppercase tracking-wide">4. Costos del Viaje</h3>
+              <div className="space-y-4">
+                <div className="p-3 rounded-lg border border-border bg-background">
+                  <p className="text-xs font-semibold text-text-secondary mb-2 uppercase tracking-wider">💰 Precio Cobrado al Cliente</p>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="col-span-2">
+                      <input type="number" step="0.01" min="0" className="input" placeholder="0.00" value={form.precio_flete} onChange={e => set('precio_flete', e.target.value)} />
+                    </div>
+                    <div>
+                      <select className="input" value={form.precio_currency} onChange={e => set('precio_currency', e.target.value)}>
+                        <option value="USD">USD $</option>
+                        <option value="VES">VES Bs.</option>
+                        <option value="EUR">EUR €</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-3 rounded-lg border border-border bg-background">
+                  <p className="text-xs font-semibold text-text-secondary mb-2 uppercase tracking-wider">🚛 Bono / Comisión del Chofer</p>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="col-span-2">
+                      <input type="number" step="0.01" min="0" className="input" placeholder="0.00" value={form.bono_chofer} onChange={e => set('bono_chofer', e.target.value)} />
+                    </div>
+                    <div>
+                      <select className="input" value={form.bono_currency} onChange={e => set('bono_currency', e.target.value)}>
+                        <option value="USD">USD $</option>
+                        <option value="VES">VES Bs.</option>
+                        <option value="EUR">EUR €</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-3 rounded-lg border border-border bg-background">
+                  <p className="text-xs font-semibold text-text-secondary mb-2 uppercase tracking-wider">🛣️ Viáticos (Peajes / Comida)</p>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="col-span-2">
+                      <input type="number" step="0.01" min="0" className="input" placeholder="0.00" value={form.viaticos} onChange={e => set('viaticos', e.target.value)} />
+                    </div>
+                    <div>
+                      <select className="input" value={form.viaticos_currency} onChange={e => set('viaticos_currency', e.target.value)}>
+                        <option value="USD">USD $</option>
+                        <option value="VES">VES Bs.</option>
+                        <option value="EUR">EUR €</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </form>
         </div>

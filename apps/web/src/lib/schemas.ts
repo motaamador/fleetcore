@@ -103,6 +103,13 @@ export const TripCreateSchema = z.object({
   departure_time: z.string().datetime({ offset: true }).optional().nullable(),
   arrival_time:   z.string().datetime({ offset: true }).optional().nullable(),
   notes:          z.string().max(2000).optional().nullable(),
+  // Campos financieros
+  precio_flete:      positiveNumber.optional().nullable(),
+  precio_currency:   z.string().max(3).optional().nullable(),
+  bono_chofer:       positiveNumber.optional().nullable(),
+  bono_currency:     z.string().max(3).optional().nullable(),
+  viaticos:          positiveNumber.optional().nullable(),
+  viaticos_currency: z.string().max(3).optional().nullable(),
 })
 
 export const TripStatusSchema = z.object({

@@ -28,6 +28,12 @@ interface FormData {
   origin: string
   destination: string
   distance_km: string
+  precio_flete: string
+  precio_currency: string
+  bono_chofer: string
+  bono_currency: string
+  viaticos: string
+  viaticos_currency: string
 }
 
 const INITIAL_FORM: FormData = {
@@ -37,6 +43,12 @@ const INITIAL_FORM: FormData = {
   origin: '',
   destination: '',
   distance_km: '',
+  precio_flete: '',
+  precio_currency: 'USD',
+  bono_chofer: '',
+  bono_currency: 'USD',
+  viaticos: '',
+  viaticos_currency: 'USD',
 }
 
 export function NewFleteModal({ open, onClose, onSuccess, projects, vehicles, drivers }: NewFleteModalProps) {
@@ -98,6 +110,12 @@ export function NewFleteModal({ open, onClose, onSuccess, projects, vehicles, dr
           origin:      form.origin.trim(),
           destination: form.destination.trim(),
           distance_km: form.distance_km ? parseFloat(form.distance_km) : null,
+          precio_flete:      form.precio_flete ? parseFloat(form.precio_flete) : null,
+          precio_currency:   form.precio_currency || 'USD',
+          bono_chofer:       form.bono_chofer ? parseFloat(form.bono_chofer) : null,
+          bono_currency:     form.bono_currency || 'USD',
+          viaticos:          form.viaticos ? parseFloat(form.viaticos) : null,
+          viaticos_currency: form.viaticos_currency || 'USD',
           status:      'scheduled'
         }, stops)
         handleClose()
@@ -282,6 +300,65 @@ export function NewFleteModal({ open, onClose, onSuccess, projects, vehicles, dr
                   ))}
                 </div>
               )}
+            </div>
+
+            {/* SECCIÓN 4: FINANCIERO */}
+            <div>
+              <h3 className="text-sm font-bold text-text-primary mb-3 uppercase tracking-wide">4. Costos del Viaje</h3>
+              <div className="space-y-4">
+
+                {/* Precio al cliente */}
+                <div className="p-3 rounded-lg border border-border bg-background">
+                  <p className="text-xs font-semibold text-text-secondary mb-2 uppercase tracking-wider">💰 Precio Cobrado al Cliente</p>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="col-span-2">
+                      <input type="number" step="0.01" min="0" className="input" placeholder="0.00" value={form.precio_flete} onChange={(e) => set('precio_flete', e.target.value)} />
+                    </div>
+                    <div>
+                      <select className="input" value={form.precio_currency} onChange={(e) => set('precio_currency', e.target.value)}>
+                        <option value="USD">USD $</option>
+                        <option value="VES">VES Bs.</option>
+                        <option value="EUR">EUR €</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bono chofer */}
+                <div className="p-3 rounded-lg border border-border bg-background">
+                  <p className="text-xs font-semibold text-text-secondary mb-2 uppercase tracking-wider">🚛 Bono / Comisión del Chofer</p>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="col-span-2">
+                      <input type="number" step="0.01" min="0" className="input" placeholder="0.00" value={form.bono_chofer} onChange={(e) => set('bono_chofer', e.target.value)} />
+                    </div>
+                    <div>
+                      <select className="input" value={form.bono_currency} onChange={(e) => set('bono_currency', e.target.value)}>
+                        <option value="USD">USD $</option>
+                        <option value="VES">VES Bs.</option>
+                        <option value="EUR">EUR €</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Viáticos */}
+                <div className="p-3 rounded-lg border border-border bg-background">
+                  <p className="text-xs font-semibold text-text-secondary mb-2 uppercase tracking-wider">🛣️ Viáticos (Peajes / Comida)</p>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="col-span-2">
+                      <input type="number" step="0.01" min="0" className="input" placeholder="0.00" value={form.viaticos} onChange={(e) => set('viaticos', e.target.value)} />
+                    </div>
+                    <div>
+                      <select className="input" value={form.viaticos_currency} onChange={(e) => set('viaticos_currency', e.target.value)}>
+                        <option value="USD">USD $</option>
+                        <option value="VES">VES Bs.</option>
+                        <option value="EUR">EUR €</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
             </div>
 
           </form>

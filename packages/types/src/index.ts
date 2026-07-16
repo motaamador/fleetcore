@@ -79,6 +79,13 @@ export interface Trip {
   departure_time?: string;
   arrival_time?: string;
   notes?: string;
+  // Campos financieros del viaje
+  precio_flete?: number | null;
+  precio_currency?: string | null;
+  bono_chofer?: number | null;
+  bono_currency?: string | null;
+  viaticos?: number | null;
+  viaticos_currency?: string | null;
   created_at: string;
   updated_at: string;
   // Relaciones cargadas por JOIN (Supabase select con expand)
