@@ -1,7 +1,8 @@
 import type { Metadata } from 'next'
-import { Plus, Search, Filter, MapPin, Truck, CalendarClock, Edit2, AlertCircle, HardHat, ArrowRight, Package } from 'lucide-react'
+import { Plus, Search, Filter, MapPin, Truck, CalendarClock, Edit2, AlertCircle, HardHat, ArrowRight, Package, FileText } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import type { Trip } from '@fleetcore/types'
+import { GenerateInvoiceButton } from '@/components/fletes/GenerateInvoiceButton'
 
 export const metadata: Metadata = { title: 'Fletes y Rutas | FleetCore' }
 export const dynamic = 'force-dynamic'
@@ -369,6 +370,12 @@ export default async function FletesPage({ searchParams }: { searchParams?: { qu
                   {/* ── Acciones ── */}
                   <td className="table-cell text-right">
                     <div className="flex items-center justify-end gap-1">
+                      {trip.status === 'completed' && (
+                        <GenerateInvoiceButton
+                          tripId={trip.id}
+                          hasPrice={!!trip.precio_flete}
+                        />
+                      )}
                       <EditFleteButton
                         trip={trip as any}
                         projects={dbProjects ?? []}

@@ -104,3 +104,88 @@ export async function updateTripStatusAction(id: string, status: string) {
     return handleActionError(e)
   }
 }
+
+// ── Genera una factura borrador a partir de un flete completado ───────────────
+export async function generateInvoiceFromTripAction(tripId: string) {
+  try {
+    const { supabase } = await requireRole([...ALLOWED_WRITE])
+
+    // Obtener el flete con su proyecto y datos financieros
+    const { data: trip, error: tripError } = await supabase
+      .from('trips')
+      .select('*, projects(name, client_id, client_name)')
+      .eq('id', tripId)
+      .single()
+
+    if (tripError || !trip) throw new Error('Flete no encontrado')
+    if (!trip.precio_flete) throw new Error('El flete no tiene un precio registrado. Agrega el precio en "Costos del Viaje" primero.')
+
+    // Construir la factura borrador
+    const invoiceData = {
+      client_name:  trip.projects?.client_name || trip.projects?.name || 'Cliente Desconocido',
+      client_rif:   null,
+      project_id:   trip.project_id || null,
+      subtotal:     trip.precio_flete,
+      tax_pct:      0,
+      currency:     trip.precio_currency || 'USD',
+      status:       'borrador',
+      issued_at:    new Date().toISOString().split('T')[0],
+      notes:        `Flete: ${trip.origin} → ${trip.destination}`,
+    }
+
+    const { data: invoice, error: invError } = await supabase
+      .from('invoices')
+      .insert(invoiceData)
+      .select('id')
+      .single()
+
+    if (invError) throw new Error(invError.message)
+
+    revalidatePath(PATH)
+    revalidatePath('/dashboard/facturacion')
+    return { success: true, invoiceId: invoice.id }
+  } catch (e) {
+    return handleActionError(e)
+  }
+}
+
+// ── Obtiene los bonos de viajes completados de un chofer en un período ────────
+export async function getTripBonusesByDriverAction(
+  driverId: string,
+  periodStart: string,
+  periodEnd: string
+) {
+  try {
+    const { supabase } = await requireRole([...ALLOWED_WRITE, 'finance'])
+
+    const { data: trips, error } = await supabase
+      .from('trips')
+      .select('id, origin, destination, bono_chofer, bono_currency, departure_time')
+      .eq('driver_id', driverId)
+      .eq('status', 'completed')
+      .gte('departure_time', `${periodStart}T00:00:00Z`)
+      .lte('departure_time', `${periodEnd}T23:59:59Z`)
+      .not('bono_chofer', 'is', null)
+      .gt('bono_chofer', 0)
+
+    if (error) throw new Error(error.message)
+
+    // Agrupar por moneda
+    const byUSD = (trips || []).filter(t => (t.bono_currency || 'USD') === 'USD')
+    const byVES = (trips || []).filter(t => t.bono_currency === 'VES')
+
+    const totalUSD = byUSD.reduce((s, t) => s + (t.bono_chofer || 0), 0)
+    const totalVES = byVES.reduce((s, t) => s + (t.bono_chofer || 0), 0)
+
+    return {
+      success: true,
+      trips: trips || [],
+      totalUSD,
+      totalVES,
+      count: (trips || []).length,
+    }
+  } catch (e) {
+    return handleActionError(e)
+  }
+}
+

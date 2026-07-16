@@ -1,8 +1,10 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { X, DollarSign, Loader2, Calendar, User, FileText, PlusCircle, MinusCircle } from 'lucide-react'
+import { X, DollarSign, Loader2, Calendar, User, FileText, PlusCircle, MinusCircle, Truck, CheckCircle2 } from 'lucide-react'
 import { createPayrollAction } from '@/app/dashboard/nominas/actions'
+import { getTripBonusesByDriverAction } from '@/app/dashboard/fletes/actions'
+import { toast } from 'sonner'
 
 // ── Tipos ─────────────────────────────────────────────────────────────────────
 interface Profile { id: string; full_name: string; role: string; cedula_identidad?: string }
@@ -24,6 +26,15 @@ interface FormData {
   currency:     string
   status:       string
   notes:        string
+}
+
+interface TripBonus {
+  id: string
+  origin: string
+  destination: string
+  bono_chofer: number
+  bono_currency: string
+  departure_time: string
 }
 
 const getFirstDayOfMonth = () => {
@@ -63,12 +74,54 @@ export function NewPayrollModal({ open, onClose, onSuccess, employees }: NewPayr
   const [form, setForm] = useState<FormData>(INITIAL_FORM)
   const [errors, setErrors] = useState<Partial<FormData>>({})
   const [isPending, startTransition] = useTransition()
+  const [tripBonuses, setTripBonuses] = useState<TripBonus[]>([])
+  const [bonusTotals, setBonusTotals] = useState<{ totalUSD: number; totalVES: number; count: number } | null>(null)
+  const [isLoadingBonuses, setIsLoadingBonuses] = useState(false)
 
   if (!open) return null
 
   function set(field: keyof FormData, value: string) {
     setForm(prev => ({ ...prev, [field]: value }))
     setErrors(prev => ({ ...prev, [field]: '' }))
+  }
+
+  // Cuando cambia el chofer o las fechas, buscar bonos de fletes automáticamente
+  async function loadTripBonuses(driverId: string, start: string, end: string) {
+    if (!driverId || !start || !end) return
+    setIsLoadingBonuses(true)
+    const res = await getTripBonusesByDriverAction(driverId, start, end)
+    setIsLoadingBonuses(false)
+    if (res && 'success' in res && res.success) {
+      setTripBonuses((res as any).trips || [])
+      setBonusTotals({ totalUSD: (res as any).totalUSD, totalVES: (res as any).totalVES, count: (res as any).count })
+    } else {
+      setTripBonuses([])
+      setBonusTotals(null)
+    }
+  }
+
+  function handleDriverChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    set('profile_id', e.target.value)
+    if (e.target.value && form.period_start && form.period_end) {
+      loadTripBonuses(e.target.value, form.period_start, form.period_end)
+    }
+  }
+
+  function handlePeriodChange(field: 'period_start' | 'period_end', value: string) {
+    set(field, value)
+    const newStart = field === 'period_start' ? value : form.period_start
+    const newEnd   = field === 'period_end'   ? value : form.period_end
+    if (form.profile_id && newStart && newEnd) {
+      loadTripBonuses(form.profile_id, newStart, newEnd)
+    }
+  }
+
+  function applyTripBonuses() {
+    if (!bonusTotals) return
+    const totalUSD = bonusTotals.totalUSD
+    const current  = formatNum(form.bonuses)
+    set('bonuses', (current + totalUSD).toFixed(2))
+    toast.success(`Se aplicaron $${totalUSD.toFixed(2)} USD de bonos de ${bonusTotals.count} viajes`)
   }
 
   // Cálculos en tiempo real
@@ -109,6 +162,8 @@ export function NewPayrollModal({ open, onClose, onSuccess, employees }: NewPayr
           payment_date: form.status === 'pagado' ? new Date().toISOString().split('T')[0] : null,
         })
         setForm(INITIAL_FORM)
+        setTripBonuses([])
+        setBonusTotals(null)
         onSuccess()
         onClose()
       } catch (err: any) {
@@ -120,6 +175,8 @@ export function NewPayrollModal({ open, onClose, onSuccess, employees }: NewPayr
   function handleClose() {
     setForm(INITIAL_FORM)
     setErrors({})
+    setTripBonuses([])
+    setBonusTotals(null)
     onClose()
   }
 
@@ -156,7 +213,7 @@ export function NewPayrollModal({ open, onClose, onSuccess, employees }: NewPayr
             <select
               className={`input ${errors.profile_id ? 'border-danger' : ''}`}
               value={form.profile_id}
-              onChange={e => set('profile_id', e.target.value)}
+              onChange={handleDriverChange}
             >
               <option value="">— Seleccionar personal —</option>
               {employees.map(emp => (
@@ -176,7 +233,7 @@ export function NewPayrollModal({ open, onClose, onSuccess, employees }: NewPayr
                 type="date"
                 className={`input ${errors.period_start ? 'border-danger' : ''}`}
                 value={form.period_start}
-                onChange={e => set('period_start', e.target.value)}
+                onChange={e => handlePeriodChange('period_start', e.target.value)}
               />
               {errors.period_start && <p className="text-xs text-danger mt-1">{errors.period_start}</p>}
             </div>
@@ -186,11 +243,55 @@ export function NewPayrollModal({ open, onClose, onSuccess, employees }: NewPayr
                 type="date"
                 className={`input ${errors.period_end ? 'border-danger' : ''}`}
                 value={form.period_end}
-                onChange={e => set('period_end', e.target.value)}
+                onChange={e => handlePeriodChange('period_end', e.target.value)}
               />
               {errors.period_end && <p className="text-xs text-danger mt-1">{errors.period_end}</p>}
             </div>
           </div>
+
+          {/* ── Bonos de Fletes (Panel automático) ── */}
+          {form.profile_id && (
+            <div className="border border-border rounded-lg overflow-hidden">
+              <div className="flex items-center justify-between px-3 py-2 bg-background border-b border-border">
+                <div className="flex items-center gap-2 text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                  <Truck className="w-3.5 h-3.5" /> Bonos de Viajes en este Período
+                </div>
+                {isLoadingBonuses && <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />}
+              </div>
+
+              <div className="p-3">
+                {bonusTotals && bonusTotals.count > 0 ? (
+                  <>
+                    <div className="space-y-1.5 mb-3 max-h-28 overflow-y-auto">
+                      {tripBonuses.map(t => (
+                        <div key={t.id} className="flex justify-between items-center text-xs">
+                          <span className="text-text-secondary truncate flex-1 pr-2">{t.origin} → {t.destination}</span>
+                          <span className="font-medium text-success whitespace-nowrap">
+                            +{t.bono_currency === 'VES' ? 'Bs.' : '$'} {t.bono_chofer.toFixed(2)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex items-center justify-between pt-2 border-t border-border">
+                      <div className="text-xs">
+                        <span className="text-text-muted">{bonusTotals.count} viajes · </span>
+                        {bonusTotals.totalUSD > 0 && <span className="font-semibold text-success">${bonusTotals.totalUSD.toFixed(2)} USD</span>}
+                        {bonusTotals.totalUSD > 0 && bonusTotals.totalVES > 0 && <span className="text-text-muted"> + </span>}
+                        {bonusTotals.totalVES > 0 && <span className="font-semibold text-success">Bs. {bonusTotals.totalVES.toFixed(2)}</span>}
+                      </div>
+                      <button type="button" onClick={applyTripBonuses} className="btn-secondary py-1 text-xs flex items-center gap-1.5">
+                        <CheckCircle2 className="w-3 h-3 text-success" /> Aplicar Bonos
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-xs text-text-muted text-center py-2">
+                    {isLoadingBonuses ? 'Buscando viajes...' : 'Sin bonos de fletes en este período.'}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Desglose Financiero */}
           <div className="space-y-4 pt-2 border-t border-border">
@@ -294,3 +395,5 @@ export function NewPayrollModal({ open, onClose, onSuccess, employees }: NewPayr
     </>
   )
 }
+
+
