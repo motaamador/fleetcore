@@ -80,12 +80,13 @@ export default async function NominasPage({ searchParams }: { searchParams?: { q
     .filter(r => r.status === 'pagado' && r.currency === 'USD')
     .reduce((s, r) => s + (r.net_pay || 0), 0)
 
-  // Formatear data para CSV
   const exportData = safeRecords.map(r => ({
     'ID Recibo': `NOM-${r.id.substring(0,6).toUpperCase()}`,
     'Personal': r.profiles?.full_name || 'Desconocido',
     'Cédula': r.profiles?.cedula_identidad || '',
     'Rol': r.profiles?.role || '',
+    'Banco': r.profiles?.bank_name || '',
+    'Nro Cuenta': r.profiles?.bank_account_number || '',
     'Desde': r.period_start ? new Date(r.period_start).toLocaleDateString('es-ES') : '',
     'Hasta': r.period_end ? new Date(r.period_end).toLocaleDateString('es-ES') : '',
     'Base': r.base_salary || 0,
