@@ -178,7 +178,10 @@ export default async function FletesPage({ searchParams }: { searchParams?: { qu
     'Conductor': t.profiles?.full_name || 'Sin asignar',
     'Placa Vehículo': t.vehicles?.plate_number || 'N/A',
     'Distancia (km)': t.distance_km || 0,
-    'Fecha Salida': t.departure_time ? new Date(t.departure_time).toLocaleDateString('es-ES') : 'Pendiente'
+    'Fecha Flete': t.departure_time ? new Date(t.departure_time).toLocaleString('es-ES', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Pendiente',
+    'Costo al Cliente': t.precio_flete ? `${t.precio_currency === 'VES' ? 'Bs.' : '$'} ${t.precio_flete}` : '0',
+    'Bono Chofer': t.bono_chofer ? `${t.bono_currency === 'VES' ? 'Bs.' : '$'} ${t.bono_chofer}` : '0',
+    'Viáticos': t.viaticos ? `${t.viaticos_currency === 'VES' ? 'Bs.' : '$'} ${t.viaticos}` : '0'
   }))
 
   return (
