@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Plus, Search, Filter, MapPin, Truck, CalendarClock, Edit2, AlertCircle, HardHat, ArrowRight, Package, FileText } from 'lucide-react'
+import { Plus, Search, Filter, MapPin, Truck, CalendarClock, Edit2, AlertCircle, HardHat, ArrowRight, Package, FileText, DollarSign } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import type { Trip } from '@fleetcore/types'
 import { GenerateInvoiceButton } from '@/components/fletes/GenerateInvoiceButton'
@@ -235,6 +235,7 @@ export default async function FletesPage({ searchParams }: { searchParams?: { qu
               <th className="table-header">Estado</th>
               <th className="table-header">Conductor y Vehículo</th>
               <th className="table-header">Distancia</th>
+              <th className="table-header">Finanzas</th>
               <th className="table-header">Salida</th>
               <th className="table-header text-right">Acciones</th>
             </tr>
@@ -347,6 +348,31 @@ export default async function FletesPage({ searchParams }: { searchParams?: { qu
                   {/* ── Distancia ── */}
                   <td className="table-cell text-sm text-text-secondary">
                     {trip.distance_km ? `${trip.distance_km} km` : '—'}
+                  </td>
+
+                  {/* ── Finanzas ── */}
+                  <td className="table-cell">
+                    <div className="flex flex-col gap-1">
+                      {trip.precio_flete ? (
+                        <div className="flex items-center gap-1.5 text-xs">
+                          <span className="text-text-muted w-10">Costo:</span>
+                          <span className="font-semibold text-text-primary">
+                            {trip.precio_currency === 'VES' ? 'Bs.' : '$'}{trip.precio_flete}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-text-muted italic">Sin precio</span>
+                      )}
+                      
+                      {trip.bono_chofer ? (
+                        <div className="flex items-center gap-1.5 text-xs">
+                          <span className="text-text-muted w-10">Bono:</span>
+                          <span className="font-medium text-success">
+                            +{trip.bono_currency === 'VES' ? 'Bs.' : '$'}{trip.bono_chofer}
+                          </span>
+                        </div>
+                      ) : null}
+                    </div>
                   </td>
 
                   {/* ── Salida ── */}
