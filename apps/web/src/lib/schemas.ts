@@ -48,6 +48,10 @@ export const ChoferCreateSchema = z.object({
   full_name:    z.string().min(3).max(150),
   phone_number: z.string().max(20).optional().nullable(),
   avatar_url:   z.string().url().optional().nullable(),
+  cedula_identidad: z.string().optional().nullable(),
+  licencia_tipo: z.string().optional().nullable(),
+  bank_account_number: z.string().optional().nullable(),
+  bank_name: z.string().optional().nullable(),
   is_active:    z.boolean().optional(),
   // id viene de auth.users — no se puede crear desde el form sin Admin API
   id:           uuid.optional(),
